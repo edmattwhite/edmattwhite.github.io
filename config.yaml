@@ -1,0 +1,25 @@
+baseURL: "http://example.org/"
+languageCode: "en-gb"
+title: "Ed's Blog"
+theme: "ween"
+defaultMarkdownHandler: pandoc
+
+params:
+  author: "Edward White"
+
+menu:
+  main:
+    - name: Home
+      url: ""
+      weight: 1
+    - name: About
+      url: "about/"
+      weight: 2
+    - name: Categories
+      url: "categories/"
+      weight: 3
+    - name: Tags
+      url: "tags/"
+      weight: 4
+    - name: Subscribe
+      url: "index.xml"
