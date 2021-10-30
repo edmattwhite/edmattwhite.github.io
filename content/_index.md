@@ -1,30 +1,22 @@
 ---
 title: "Home"
-date: 2021-02-11T20:52:38Z
+date:
 draft: false
 markup: pandoc
 math: true
 ---
 
-This is a simple blah blah.
-This is some more inline stuff but with maths: $\alpha$, and some code `for (i = 1:100)`.
+This website is (right now) relatively incomplete, but it was put here in the theme of a tip from Richard Hamming:
 
-\begin{equation}
- A \mathbf{x} = \mathbf{b}
-\end{equation}
+>  I knew that most people who took a sabbatical to write a book, didn't finish it on time. So before I left, I told all my friends that when I come back, that book was going to be done! Yes, I would have it done - I'd have been ashamed to come back without it! I used my ego to make myself behave the way I wanted to. I bragged about something so I'd have to perform. I found out many times, like a cornered rat in a real trap, I was surprisingly capable. I have found that it paid to say, "Oh yes, I'll get the answer for you Tuesday," not having any idea how to do it. By Sunday night I was really hard thinking on how I was going to deliver by Tuesday. I often put my pride on the line and sometimes I failed, but as I said, like a cornered rat I'm surprised how often I did a good job. I think you need to learn to use yourself. I think you need to know how to convert a situation from one view to another which would increase the chance of success.
 
-    verbatim
+As such, I'm laying down a commitment to completing _at least_ the following articles:
 
-> Somebody once said this.
-
--------------------------------------------------------------
- Centered   Default           Right Left
-  Header    Aligned         Aligned Aligned
------------ ------- --------------- -------------------------
-   First    row                12.0 Example of a row that
-                                    spans multiple lines.
-
-  Second    row                 5.0 Here's another one. Note
-                                    the blank line between
-                                    rows.
--------------------------------------------------------------
+* EM Algorithm.
+* Variational Inference.
+* What is mean field variational inference?
+* Euler Lagrange.
+* Gibbs Sampling.
+* HMC.
+* Gradient Ascent.
+* What is the point of a maximium entropy distribution and how do I find one?

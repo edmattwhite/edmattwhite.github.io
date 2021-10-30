@@ -1,0 +1,3 @@
+[submodule "themes/ween"]
+	path = themes/ween
+	url = git@github.com:edmattwhite/ween.git
