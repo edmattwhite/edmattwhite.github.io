@@ -1,7 +1,7 @@
 ---
 title: "What is the Expectation Maximisation algorithm?"
 date: 2021-02-22T20:33:41Z
-draft: true
+draft: false
 markup: pandoc
 math: true
 ---
