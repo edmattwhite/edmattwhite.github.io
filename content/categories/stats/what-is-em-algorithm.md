@@ -11,6 +11,8 @@ The structure of the model can lend itself well to describing a real world proce
 Unfortunately, real world processes are incredibly rude and often lead to intractable likelihoods.
 The Expectation Maximisation (EM) algorithm offers us a way around this by giving an iterative procedure for find MAP (or maximum likelihood) estimates for parameters.
 
+One thing to consider when reading this is that the EM algorithm is less an algorithm in itself, but more a method to find algorithms.
+
 ## What's the problem? ##
 
 Let's say we have a statistical model $p$ for some observed data $X$.
@@ -120,9 +122,23 @@ Where $D_{KL}$ is the Kullback-Leibler divergence.
 Looking at this we're in a nice position to start making statements about how good our estimates might be, with a mixture of quantities we're interested in, quantities we can calculate and quantities that we can bound.
 To make this a bit more explicit, let's make one more definition:
 
-\begin{equation}
-Q(\theta, \varphi) = \mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
-\end{equation}
+\begin{align}
+Q(\theta, \varphi) 
+&= \mathbb{E}_{Z \sim Z \vert \varphi, X}
+\left[
+         \log \mathbb{P}( X \vert Z, \theta)
+         +
+         \log \mathbb{P}( Z \vert \theta)
+         +
+         \log \mathbb{P}(\theta)
+\right] \\
+&= \mathbb{E}_{Z \sim Z \vert \varphi, X}
+\left[
+         \log \mathbb{P}( Z, \theta \vert X)
+         + 
+         \log \mathbb{P}(X)
+\right]
+\end{align}
 
 Our previous expression now simplifies down:
 
@@ -161,4 +177,4 @@ We could get stuck in some local maxima, but that's often something that we'll b
 
 I've really just asserted that $Q$ is going to be helpful, as at the moment the expectation that we're taking is still running over all possible states.
 In real examples we can often eploit model structure and the linearity of expectation to turn these sums into something more tractable.
-It'll be easier to understand this in [an example]({{% ref "/stats/how-to-em-algorithm" %}}).
+It'll be easier to understand this in [an example]({{% ref "categories/stats/how-to-em-algorithm" %}}).

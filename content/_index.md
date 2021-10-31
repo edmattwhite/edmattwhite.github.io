@@ -12,7 +12,6 @@ This website is (right now) relatively incomplete, but it was put here in the th
 
 As such, I'm laying down a commitment to completing _at least_ the following articles:
 
-* EM Algorithm.
 * Variational Inference.
 * What is mean field variational inference?
 * Euler Lagrange.
