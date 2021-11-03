@@ -1,5 +1,5 @@
 ---
-title: "Stats"
+title: "Statistics"
 date:
 draft: false
 markup: pandoc
