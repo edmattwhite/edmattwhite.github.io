@@ -1,0 +1,71 @@
+<!doctype html><html><head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<link rel=stylesheet type=text/css href=/css/style.css><link rel=icon href=/images/favicon.ico type=image/x-icon>
+<title>Ed's Blog | What is a Generalised Linear Model?</title>
+</head><body><nav><img src=/images/logo.svg alt="Ed's Blog">
+<li><a href=/>
+Home
+</a></li>
+<li><a href=/about/>
+About
+</a></li>
+<li><a href=/categories/>
+Categories
+</a></li>
+</nav><div class=content>
+<div class=article-meta>
+<h1><span class=title>What is a Generalised Linear Model?</span></h1>
+<h2 class=date>08/11/2021</h2>
+</div>
+<main>
+<p>Generalised Linear Models (GLMs) are a natural extension of simple normal linear regression to scenarios involving different kinds of responses and different assumptions.</p>
+<h2 id=what-is-being-extended>What is being extended?</h2>
+<p>Linear Regression (or more precisely, the Normal Linear Model) is a very elegant tool for predicting real valued responses given some covariates, or features, that you believe have some ability to explain the trends that you see in your response. The actual model for your outcomes <span class="math inline">\(Y \in \mathbb{R}^n\)</span> given features <span class="math inline">\(X \in \mathbb{R}^{n \times p}\)</span> can be concisely expressed as <span class="math display">\[\begin{equation}
+Y \sim \text{Normal}\left(X\beta, \sigma^2 I_n \right),
+\end{equation}\]</span> where <span class="math inline">\(I_n\)</span> is the <span class="math inline">\(n\)</span>-dimensional identity matrix, <span class="math inline">\(\sigma^2\)</span> is some unknown variance parameter, and <span class="math inline">\(\beta\)</span> is an unknown parameter defining how your data relates to the expectation of <span class="math inline">\(Y\)</span> (hint: <em>linearly</em>).</p>
+<p>This is a really powerful way of constructing models, and can get a <em>very long way</em> to providing excellent solutions to complex problems involving large datasets today. However, you may have noticed that there is a slight problem here – the use of a normal distribution encodes an assumption about the range of the random variable <span class="math inline">\(Y\)</span> and the distribution of our errors around the expected response values. Using the model we can produce continuous estimates for <span class="math inline">\(Y_i\)</span> in the whole of <span class="math inline">\(\mathbb{R}\)</span>. This clearly makes no sense if we want to predict a proportion (<span class="math inline">\(Y_i \in [0, 1]\)</span>), a count (<span class="math inline">\(Y_i \in \mathbb{Z}\)</span>) or a length (<span class="math inline">\(Y_i \in \mathbb{R^+}\)</span>).</p>
+<h2 id=what-does-a-glm-do>What does a GLM do?</h2>
+<p>The Generalised Linear Model extends the Normal Linear Model in two specific ways:</p>
+<ol type=1>
+<li>Stochastic: relaxes the assumption that the stochastic component of the model should always be a Normal distribution – instead it allows us to use any member of the exponential family<a href=#fn1 class=footnote-ref id=fnref1 role=doc-noteref><sup>1</sup></a> of distributions (both continuous and discrete).</li>
+<li>Deterministic: the mean of our outcome no longer depends just on our linear term <span class="math inline">\(X\beta\)</span>, it is now allowed to be a monotonic, differentiable function of this quantity.</li>
+</ol>
+<p>What I found very confusing when first reading about this concept was disentangling the fact that these are two separate assumptions. We will see that whilst the family of distributions for the stochastic part of the model give a very natural choice for the function that gives the mean response, it is <em>not</em> fixed to be this, and keeping them separate will make picking up the theory a little easier to begin with.</p>
+<h2 id=the-stochastic-part>The Stochastic Part</h2>
+<p>Each element of the response, <span class="math inline">\(Y_i\)</span>, is independent of the other components and has distribution in the same family (i.e. the same “type” of random variable, with a different parametrisation given by the associated observed data). This family must be an exponential family, i.e. its density or mass function takes on the form <a href=#fn2 class=footnote-ref id=fnref2 role=doc-noteref><sup>2</sup></a>: <span class="math display">\[\begin{equation}
+f(y_i \vert \theta_i, \varphi) = \exp \left( \frac{y\theta_i - b(\theta_i)}{a(\varphi)} + c(\theta_i, \varphi) \right)
+\end{equation}\]</span> <span class="math inline">\(a\)</span>, <span class="math inline">\(b\)</span> and <span class="math inline">\(c\)</span> are simply real valued functions. We refer to <span class="math inline">\(\varphi\)</span> as the dispersion parameter, and <span class="math inline">\(\theta_i\)</span> as the canonical or natural parameter. It is normal to assume that <span class="math inline">\(\varphi\)</span> is a nuisance parameter shared across different observations (in the same way that a Normal linear model has a shared variance for each of the error terms), but we allow the <span class="math inline">\(\theta_i\)</span> to be different for each observation.</p>
+<p>This assumption on the form of the density might look unusual and quite restrictive at first, but in actual fact the Normal distribution, Poisson, Binomial, Gamma, etc. can be coerced to this form. This may require fixing something that we previously took as a parameter to be constant, like the number of trials for the Binomial.</p>
+<h2 id=the-deterministic-part>The Deterministic Part</h2>
+<p>This part is usually described using a parameter <span class="math inline">\(\eta\)</span>, where <span class="math inline">\(\eta_i = X_{ij}\beta_j\)</span> (just a linear combination of observations with parameters <span class="math inline">\(\beta\)</span>). It’s not immediately obvious how to relate our probabilistic component to our <span class="math inline">\(\eta_i\)</span> – in the Normal linear model, we do this through the mean parameter <span class="math inline">\(\mu_i = \eta_i\)</span>. This doesn’t work if we’re trying to perform regression on observations only taking on values in <span class="math inline">\([0, 1]\)</span>, as we described previously. To get around this, we introduce a link function <span class="math inline">\(g: \mathcal{Y} \rightarrow \mathbb{R}\)</span>, where <span class="math inline">\(\mathcal{Y}\)</span> is the domain of our data, so that: <span class="math display">\[\begin{equation}
+g(\mu_i) = \eta_i
+\end{equation}\]</span> We require that <span class="math inline">\(g\)</span> is monotonic and differentiable in order for the model that we put together to work.</p>
+<h2 id=is-that-it>Is that it?</h2>
+<p>Yes, it’s as simple as that – defining a probability distribution and a link function fully describes a Generalised Linear Model.</p>
+<h2 id=what-is-a-canonical-link-function>What is a canonical link function?</h2>
+<p>The canonical link function is one that identifies the linear combination of data and parameters <span class="math inline">\(\eta_i\)</span>, with the canonical or natural parameter <span class="math inline">\(\theta_i\)</span>: <span class="math display">\[\begin{equation}
+\eta_i = \theta_i
+\end{equation}\]</span> There is also a much less obvious (but entirely equivalent statement), that the canonical link function is given by: <span class="math display">\[\begin{equation}
+g\left(b'(\theta)\right) = \theta
+\end{equation}\]</span> The canonical link function is often a sensible choice – a default that you can choose to override, but should really think hard about why it is that you’re doing so before you do it.</p>
+<h2 id=how-do-i-fit-one>How do I fit one?</h2>
+<p>If you’re lucky enough to be working in <em>R</em>, GLMs come baked into the standard library, and can be fit <a href=#fn3 class=footnote-ref id=fnref3 role=doc-noteref><sup>3</sup></a> like this:</p>
+<div class=sourceCode id=cb1><pre class="sourceCode r"><code class="sourceCode r"><span id=cb1-1><a href=#cb1-1></a><span class=kw>glm</span>(y <span class=op>~</span><span class=st> </span>x, <span class=dt>family =</span> <span class=kw>poisson</span>(<span class=dt>link =</span> <span class=st>&quot;log&quot;</span>))</span></code></pre></div>
+<p>This even lets you specify a link function of your own! It’s worth noting that unlike a Normal linear model, the GLM has to be fit with an approximate, iterative procedure called Iterated Weighted Least Squares (IWLS), which is essentially Newton’s method. This procedure actually makes use of fitting lots of linear models with least squares under the hood, and is quite simple to implement once you have your model written down, making GLMs very approachable even if your language of choice doesn’t have them by default! If you want to find out how to do this, I’d really recommend Dunn and Smyth, which you’ll find as a reference below.</p>
+<section class=footnotes role=doc-endnotes>
+<hr>
+<ol>
+<li id=fn1 role=doc-endnote><p><em>Generalized Linear Models with R</em>, Peter K. Dunn & Gordon K. Smyth, Springer, 2018<a href=#fnref1 class=footnote-back role=doc-backlink>↩︎</a></p></li>
+<li id=fn2 role=doc-endnote><p>There are a few different formulations of an exponential family distribution – this one makes the set up for GLMs easy. It also leaves out the condition that the sample space can’t depend on parameters, but that’s a bit in the weeds if you just want to get started with GLMs.<a href=#fnref2 class=footnote-back role=doc-backlink>↩︎</a></p></li>
+<li id=fn3 role=doc-endnote><p>This fit is maximum likelihood estimation of the parameters <span class="math inline">\(\beta\)</span> – the link between the least squares estimate and the MLE is broken for the general exponential family.<a href=#fnref3 class=footnote-back role=doc-backlink>↩︎</a></p></li>
+</ol>
+</section>
+</main>
+</div><footer>
+<p>&copy; 2021 - Edward White</p>
+</footer>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src=/js/mathjax-config.js async></script>
+</script></body>
+</html>
