@@ -1,152 +1,98 @@
-<!doctype html><html><head>
-<meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<link rel=stylesheet type=text/css href=/css/style.css><link rel=icon href=/images/favicon.ico type=image/x-icon>
-<title>Ed's Blog | What is the Expectation Maximisation algorithm?</title>
-</head><body><nav><img src=/images/logo.svg alt="Ed's Blog">
-<li><a href=/>
-Home
-</a></li>
-<li><a href=/about/>
-About
-</a></li>
-<li><a href=/categories/>
-Categories
-</a></li>
-</nav><div class=content>
-<div class=article-meta>
-<h1><span class=title>What is the Expectation Maximisation algorithm?</span></h1>
-<h2 class=date>22/02/2021</h2>
-</div>
-<main>
-<p>Powerful statistical models are often useful because they are very expressive. The structure of the model can lend itself well to describing a real world process. Unfortunately, real world processes are incredibly rude and often lead to intractable likelihoods. The Expectation Maximisation (EM) algorithm offers us a way around this by giving an iterative procedure for find MAP (or maximum likelihood) estimates for parameters.</p>
-<p>One thing to consider when reading this is that the EM algorithm is less an algorithm in itself, but more a method to find algorithms.</p>
-<h2 id=whats-the-problem>What’s the problem?</h2>
-<p>Let’s say we have a statistical model <span class="math inline">\(p\)</span> for some observed data <span class="math inline">\(X\)</span>. This statistical model involves some <strong>latent</strong> or unobserved random variables <span class="math inline">\(Z\)</span>, and some parameters <span class="math inline">\(\theta\)</span>, which as we’re good Bayesians, we will suppose are also random variables.</p>
-<p>We wish to find a MAP estimate for <span class="math inline">\(\theta\)</span>. That is, we want to find <span class="math inline">\(\hat{\theta}\)</span> that satisfies:</p>
-<p><span class="math display">\[\begin{align}
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><link rel=stylesheet type=text/css href=/css/style.css><link rel=icon href=/images/favicon.ico type=image/x-icon><title>Ed's Blog | What is the Expectation Maximisation algorithm?</title></head><body><nav><img src=/images/logo.svg alt="Ed's Blog"><li><a href=/>Home</a></li><li><a href=/about/>About</a></li><li><a href=/categories/>Categories</a></li></nav><div class=content><div class=article-meta><h1><span class=title>What is the Expectation Maximisation algorithm?</span></h1><h2 class=date>22/02/2021</h2></div><main><p>Powerful statistical models are often useful because they are very expressive. The structure of the model can lend itself well to describing a real world process. Unfortunately, real world processes are incredibly rude and often lead to intractable likelihoods. The Expectation Maximisation (EM) algorithm offers us a way around this by giving an iterative procedure for find MAP (or maximum likelihood) estimates for parameters.</p><p>One thing to consider when reading this is that the EM algorithm is less an algorithm in itself, but more a method to find algorithms.</p><h2 id=whats-the-problem>What’s the problem?</h2><p>Let’s say we have a statistical model for some observed data <span class="math inline">\(X\)</span>, and that statistical model is characterised by densities <span class="math inline">\(p\)</span>. This statistical model involves some <strong>latent</strong> or unobserved random variables <span class="math inline">\(Z\)</span>, and some parameters <span class="math inline">\(\theta\)</span>, which as we’re good Bayesians, we will suppose are also random variables.</p><p>We wish to find a MAP estimate for <span class="math inline">\(\theta\)</span>. That is, we want to find <span class="math inline">\(\hat{\theta}\)</span> that satisfies:</p><p><span class="math display">\[\begin{align}
 \hat{\theta}
-&= \text{argmax}_{\theta} \left\{ \mathbb{P} \left( \theta \vert X \right) \right\} \\
+&= \text{argmax}_{\theta} \left\{ p \left( \theta \vert X \right) \right\} \\
 &= \text{argmax}_{\theta} \left\{
 \frac
-{\mathbb{P} \left( X \vert \theta \right) \mathbb{P} \left( \theta \right)}
-{\mathbb{P} \left( X \right) }
+{p \left( X \vert \theta \right) p \left( \theta \right)}
+{p \left( X \right) }
 \right\} \\
-&= \text{argmax}_{\theta} \left\{ \mathbb{P} \left( X \vert \theta \right) \mathbb{P} \left( \theta \right) \right\}
-\end{align}\]</span></p>
-<p>The last equality follows from the denominator having no dependence on <span class="math inline">\(\theta\)</span>. Having written down our expression for <span class="math inline">\(\hat{\theta}\)</span> we can see the problem straight away; the data likelihood term – <span class="math inline">\(\mathbb{P}(X \vert \theta)\)</span> – has no dependence on <span class="math inline">\(Z\)</span>. We don’t have expressions for this objects in our model, as we need explicit values for <span class="math inline">\(Z\)</span> to be able to calculate probabilities of our observed variable. If we rewrite our expression for <span class="math inline">\(\hat{\theta}\)</span> in terms of quantities that we have access to:</p>
-<p><span class="math display">\[\begin{align}
+&= \text{argmax}_{\theta} \left\{ p \left( X \vert \theta \right) p \left( \theta \right) \right\}
+\end{align}\]</span></p><p>The last equality follows from the denominator having no dependence on <span class="math inline">\(\theta\)</span>. Having written down our expression for <span class="math inline">\(\hat{\theta}\)</span> we can see the problem straight away; the data likelihood term – <span class="math inline">\(p(X \vert \theta)\)</span> – has no dependence on <span class="math inline">\(Z\)</span>. We don’t have expressions for this objects in our model, as we need explicit values for <span class="math inline">\(Z\)</span> to be able to calculate probabilities of our observed variable. If we rewrite our expression for <span class="math inline">\(\hat{\theta}\)</span> in terms of quantities that we have access to:</p><p><span class="math display">\[\begin{align}
 \hat{\theta}
 &= \text{argmax}_{\theta} \left\{
-{\int \mathbb{P} \left( X, Z \vert \theta \right) \mathbb{P} \left( \theta \right) dz }
+{\int p \left( X, Z \vert \theta \right) p \left( \theta \right) dz }
 \right\}
-\end{align}\]</span></p>
-<p>We’ve now got another problem – integrating over the domain of <span class="math inline">\(Z\)</span> is going to be impossible for all but trivial <span class="math inline">\(Z\)</span>.</p>
-<h2 id=whats-the-solution>What’s the solution?</h2>
-<p>If we’ve given up on directly calculating our MAP estimate, maybe it would be nice to have an iterative algorithm that gets us closer and closer to a good estimate for <span class="math inline">\(\hat{\theta}\)</span>. If we’re going to create an algorithm that does this for us, we’re going to want some way of assessing how close we are getting to the truth. Considering that, let’s try and at least write down an integral free expression with our posterior involving our latent variable:</p>
-<p><span class="math display">\[\begin{align}
-\mathbb{P}( \theta \vert X )
+\end{align}\]</span></p><p>We’ve now got another problem – integrating over the domain of <span class="math inline">\(Z\)</span> is going to be impossible for all but trivial <span class="math inline">\(Z\)</span>.</p><h2 id=whats-the-solution>What’s the solution?</h2><p>If we’ve given up on directly calculating our MAP estimate, maybe it would be nice to have an iterative algorithm that gets us closer and closer to a good estimate for <span class="math inline">\(\hat{\theta}\)</span>. If we’re going to create an algorithm that does this for us, we’re going to want some way of assessing how close we are getting to the truth. Considering that, let’s try and at least write down an integral free expression with our posterior involving our latent variable:</p><p><span class="math display">\[\begin{align}
+p( \theta \vert X )
 &= \frac
-{ \mathbb{P}( X, \theta )}
-{ \mathbb{P}(X) }\\
+{ p( X, \theta )}
+{ p(X) }\\
 &= \frac
-{ \mathbb{P}( X, \theta ) }
-{ \mathbb{P}(X) }
+{ p( X, \theta ) }
+{ p(X) }
 \frac
-{ \mathbb{P}( X, Z, \theta ) }
-{ \mathbb{P}( X, Z, \theta ) }\\
+{ p( X, Z, \theta ) }
+{ p( X, Z, \theta ) }\\
 &= \frac
-{ \mathbb{P}( Z, \theta \vert X) }
-{ \mathbb{P}( Z \vert \theta, X ) }
-\end{align}\]</span></p>
-<p>It’s easy to lose track, but here our observable <span class="math inline">\(X\)</span> and parameters <span class="math inline">\(\theta\)</span> are held fixed, letting our Z randomly vary. If we move this to log space, we just get:</p>
-<p><span class="math display">\[\begin{equation}
-\log \mathbb{P}( \theta \vert X ) = \log \mathbb{P}( Z, \theta \vert X) - \log \mathbb{P}( Z \vert \theta, X )
-\end{equation}\]</span></p>
-<p>Now we’ve got our first trick of this algorithm – we consider another value for our parameters, which we’ll call <span class="math inline">\(\varphi\)</span>. If we were to fix this parameter value <span class="math inline">\(\varphi\)</span>, then we could reasonably infer a probability distribution over <span class="math inline">\(Z\)</span> conditioned on this value and the observable data, which we’ll denote with <span class="math inline">\(Z \sim Z \vert \varphi, X\)</span>. A bigger leap is that we can then take expectations of our last expression using this probability distribution, which is fine as it’s just another constant.</p>
-<p><span class="math display">\[\begin{align}
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( \theta \vert X ) \right]
+{ p( Z, \theta \vert X) }
+{ p( Z \vert \theta, X ) }
+\end{align}\]</span></p><p>It’s easy to lose track, but here our observable <span class="math inline">\(X\)</span> and parameters <span class="math inline">\(\theta\)</span> are held fixed, letting our Z randomly vary. If we move this to log space, we just get:</p><p><span class="math display">\[\begin{equation}
+\log p( \theta \vert X ) = \log p( Z, \theta \vert X) - \log p( Z \vert \theta, X )
+\end{equation}\]</span></p><p>Now we’ve got our first trick of this algorithm – we consider another value for our parameters, which we’ll call <span class="math inline">\(\varphi\)</span>. If we were to fix this parameter value <span class="math inline">\(\varphi\)</span>, then we could reasonably infer a probability distribution over <span class="math inline">\(Z\)</span> conditioned on this value and the observable data, which we’ll denote with <span class="math inline">\(Z \sim Z \vert \varphi, X\)</span>. A bigger leap is that we can then take expectations of our last expression using this probability distribution, which is fine as it’s just another constant.</p><p><span class="math display">\[\begin{align}
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( \theta \vert X ) \right]
 &=
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \theta \vert X) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z \vert \theta, X ) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z \vert \theta, X ) \right]
 \\
 \Rightarrow
-\log \mathbb{P}( \theta \vert X )
+\log p( \theta \vert X )
 &=
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \theta \vert X) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z \vert \theta, X ) \right]
-\end{align}\]</span></p>
-<p>We’ve been able to simplify because the expectation is taken over a constant value. The next trick is to notice that this expression is true <strong>for any</strong> <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\varphi\)</span>. So we could set <span class="math inline">\(\theta = \varphi\)</span>, and see what happens when we take the difference of that expression with one involving <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\varphi\)</span>.</p>
-<p><span class="math display">\[\begin{align}
-\log \mathbb{P}( \theta \vert X )
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z \vert \theta, X ) \right]
+\end{align}\]</span></p><p>We’ve been able to simplify because the expectation is taken over a constant value. The next trick is to notice that this expression is true <strong>for any</strong> <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\varphi\)</span>. So we could set <span class="math inline">\(\theta = \varphi\)</span>, and see what happens when we take the difference of that expression with one involving <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\varphi\)</span>.</p><p><span class="math display">\[\begin{align}
+\log p( \theta \vert X )
 -
-\log \mathbb{P}( \varphi \vert X )
+\log p( \varphi \vert X )
 &=
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \theta \vert X) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \varphi \vert X) \right]\\
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \varphi \vert X) \right]\\
 &+
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z \vert \varphi, X ) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z \vert \varphi, X ) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z \vert \theta, X ) \right]\\
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z \vert \theta, X ) \right]\\
 &=
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \theta \vert X) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \varphi \vert X) \right]\\
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \varphi \vert X) \right]\\
 &+
-D_{KL} \left[ \mathbb{P}( Z \vert \varphi, X ) \Vert \mathbb{P}( Z \vert \theta, X ) \right]
+D_{KL} \left[ p( Z \vert \varphi, X ) \Vert p( Z \vert \theta, X ) \right]
 \\
-\end{align}\]</span></p>
-<p>Where <span class="math inline">\(D_{KL}\)</span> is the Kullback-Leibler divergence. Looking at this we’re in a nice position to start making statements about how good our estimates might be, with a mixture of quantities we’re interested in, quantities we can calculate and quantities that we can bound. To make this a bit more explicit, let’s make one more definition:</p>
-<p><span class="math display">\[\begin{align}
+\end{align}\]</span></p><p>Where <span class="math inline">\(D_{KL}\)</span> is the Kullback-Leibler divergence. Looking at this we’re in a nice position to start making statements about how good our estimates might be, with a mixture of quantities we’re interested in, quantities we can calculate and quantities that we can bound. To make this a bit more explicit, let’s make one more definition:</p><p><span class="math display">\[\begin{align}
 Q(\theta, \varphi)
 &= \mathbb{E}_{Z \sim Z \vert \varphi, X}
 \left[
-\log \mathbb{P}( X \vert Z, \theta)
+\log p( X \vert Z, \theta)
 +
-\log \mathbb{P}( Z \vert \theta)
+\log p( Z \vert \theta)
 +
-\log \mathbb{P}(\theta)
+\log p(\theta)
 \right] \\
 &= \mathbb{E}_{Z \sim Z \vert \varphi, X}
 \left[
-\log \mathbb{P}( Z, \theta \vert X)
+\log p( Z, \theta \vert X)
 +
-\log \mathbb{P}(X)
+\log p(X)
 \right]
-\end{align}\]</span></p>
-<p>Our previous expression now simplifies down:</p>
-<p><span class="math display">\[\begin{equation}
-\log \mathbb{P}( \theta \vert X )
+\end{align}\]</span></p><p>Our previous expression now simplifies down:</p><p><span class="math display">\[\begin{equation}
+\log p( \theta \vert X )
 -
-\log \mathbb{P}( \varphi \vert X )
+\log p( \varphi \vert X )
 =
 Q(\theta, \varphi)
 -
 Q(\varphi, \varphi)
 +
-D_{KL} \left[ \mathbb{P}( Z \vert \varphi, X ) \Vert \mathbb{P}( Z \vert \theta, X ) \right]
-\end{equation}\]</span></p>
-<p><span class="math inline">\(D_{KL}(p \Vert q) > 0\)</span> for any two probability distributions. This gives us an equality linking our posteriors and <span class="math inline">\(Q\)</span>:</p>
-<p><span class="math display">\[\begin{equation}
-\log \mathbb{P}( \theta \vert X )
+D_{KL} \left[ p( Z \vert \varphi, X ) \Vert p( Z \vert \theta, X ) \right]
+\end{equation}\]</span></p><p><span class="math inline">\(D_{KL}(p \Vert q) > 0\)</span> for any two probability distributions. This gives us an equality linking our posteriors and <span class="math inline">\(Q\)</span>:</p><p><span class="math display">\[\begin{equation}
+\log p( \theta \vert X )
 -
-\log \mathbb{P}( \varphi \vert X )
+\log p( \varphi \vert X )
 \geq
 Q(\theta, \varphi)
 -
 Q(\varphi, \varphi)
-\end{equation}\]</span></p>
-<p>This one line gives us the bones of the EM algorithm. Suppose that <span class="math inline">\(\varphi\)</span> is our current estimate for the MAP. If we pick a new estimate <span class="math inline">\(\theta\)</span> that maximises <span class="math inline">\(Q(\theta, \varphi)\)</span>, then we’re guaranteed to increase the log posterior by <strong>at least</strong> as much as we increase <span class="math inline">\(Q(\theta, \varphi)\)</span> over <span class="math inline">\(Q(\varphi, \varphi)\)</span>. Our inequality tells us that we can keep improving our MAP estimate, but we can’t be sure that we get to the true MAP. We could get stuck in some local maxima, but that’s often something that we’ll be willing to accept.</p>
-<h2 id=what-are-we-missing>What are we missing?</h2>
-<p>I’ve really just asserted that <span class="math inline">\(Q\)</span> is going to be helpful, as at the moment the expectation that we’re taking is still running over all possible states. In real examples we can often eploit model structure and the linearity of expectation to turn these sums into something more tractable. It’ll be easier to understand this in <a href=http://edmattwhite.github.io/categories/stats/how-to-em-algorithm/>an example</a>.</p>
-</main>
-</div><footer>
-<p>&copy; 2021 - Edward White</p>
-</footer>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script src=/js/mathjax-config.js async></script>
-</script></body>
-</html>
+\end{equation}\]</span></p><p>This one line gives us the bones of the EM algorithm. Suppose that <span class="math inline">\(\varphi\)</span> is our current estimate for the MAP. If we pick a new estimate <span class="math inline">\(\theta\)</span> that maximises <span class="math inline">\(Q(\theta, \varphi)\)</span>, then we’re guaranteed to increase the log posterior by <strong>at least</strong> as much as we increase <span class="math inline">\(Q(\theta, \varphi)\)</span> over <span class="math inline">\(Q(\varphi, \varphi)\)</span>. Our inequality tells us that we can keep improving our MAP estimate, but we can’t be sure that we get to the true MAP. We could get stuck in some local maxima, but that’s often something that we’ll be willing to accept.</p><h2 id=what-are-we-missing>What are we missing?</h2><p>I’ve really just asserted that <span class="math inline">\(Q\)</span> is going to be helpful, as at the moment the expectation that we’re taking is still running over all possible states. In real examples we can often eploit model structure and the linearity of expectation to turn these sums into something more tractable. It’ll be easier to understand this in <a href=http://edmattwhite.github.io/categories/stats/how-to-em-algorithm/>an example</a>.</p></main></div><footer><p>&copy; 2022 - Edward White</p></footer><script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script src=/js/mathjax-config.js async></script></script></body></html>
