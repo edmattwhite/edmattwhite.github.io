@@ -12,7 +12,6 @@ This website is (right now) relatively incomplete, but it was put here in the th
 
 As such, I'm putting a list on the front page of the articles that I plan to add:
 
-* Variational Inference.
 * What is mean field variational inference?
 * Euler Lagrange.
 * Gibbs Sampling.

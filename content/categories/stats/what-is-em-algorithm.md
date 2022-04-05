@@ -15,31 +15,31 @@ One thing to consider when reading this is that the EM algorithm is less an algo
 
 ## What's the problem? ##
 
-Let's say we have a statistical model $p$ for some observed data $X$.
+Let's say we have a statistical model for some observed data $X$, and that statistical model is characterised by densities $p$.
 This statistical model involves some **latent** or unobserved random variables $Z$, and some parameters $\theta$, which as we're good Bayesians, we will suppose are also random variables.
 
 We wish to find a MAP estimate for $\theta$. That is, we want to find $\hat{\theta}$ that satisfies:
 
 \begin{align}
 \hat{\theta} 
-&= \text{argmax}_{\theta} \left\{ \mathbb{P} \left( \theta \vert X \right) \right\} \\
+&= \text{argmax}_{\theta} \left\{ p \left( \theta \vert X \right) \right\} \\
 &= \text{argmax}_{\theta} \left\{
      \frac
-     {\mathbb{P} \left( X \vert \theta \right) \mathbb{P} \left( \theta \right)}
-     {\mathbb{P} \left( X \right) }
+     {p \left( X \vert \theta \right) p \left( \theta \right)}
+     {p \left( X \right) }
 \right\} \\
-&= \text{argmax}_{\theta} \left\{ \mathbb{P} \left( X \vert \theta \right) \mathbb{P} \left( \theta \right) \right\}
+&= \text{argmax}_{\theta} \left\{ p \left( X \vert \theta \right) p \left( \theta \right) \right\}
 \end{align}
 
 The last equality follows from the denominator having no dependence on $\theta$.
-Having written down our expression for $\hat{\theta}$ we can see the problem straight away; the data likelihood term -- $\mathbb{P}(X \vert \theta)$ -- has no dependence on $Z$.
+Having written down our expression for $\hat{\theta}$ we can see the problem straight away; the data likelihood term -- $p(X \vert \theta)$ -- has no dependence on $Z$.
 We don't have expressions for this objects in our model, as we need explicit values for $Z$ to be able to calculate probabilities of our observed variable.
 If we rewrite our expression for $\hat{\theta}$ in terms of quantities that we have access to:
 
 \begin{align}
 \hat{\theta} 
 &= \text{argmax}_{\theta} \left\{
-     {\int \mathbb{P} \left( X, Z \vert \theta \right) \mathbb{P} \left( \theta \right) dz }
+     {\int p \left( X, Z \vert \theta \right) p \left( \theta \right) dz }
 \right\}
 \end{align}
 
@@ -52,26 +52,26 @@ If we're going to create an algorithm that does this for us, we're going to want
 Considering that, let's try and at least write down an integral free expression with our posterior involving our latent variable:
 
 \begin{align}
-\mathbb{P}( \theta \vert X )
+p( \theta \vert X )
 &= \frac
-        { \mathbb{P}( X, \theta )}
-        { \mathbb{P}(X) }\\
+        { p( X, \theta )}
+        { p(X) }\\
 &= \frac
-        { \mathbb{P}( X, \theta ) }
-        { \mathbb{P}(X) }
+        { p( X, \theta ) }
+        { p(X) }
    \frac
-        { \mathbb{P}( X, Z, \theta ) }
-        { \mathbb{P}( X, Z, \theta ) }\\
+        { p( X, Z, \theta ) }
+        { p( X, Z, \theta ) }\\
 &= \frac
-        { \mathbb{P}( Z, \theta \vert X) }
-        { \mathbb{P}( Z \vert \theta, X ) }
+        { p( Z, \theta \vert X) }
+        { p( Z \vert \theta, X ) }
 \end{align}
 
 It's easy to lose track, but here our observable $X$ and parameters $\theta$ are held fixed, letting our Z randomly vary.
 If we move this to log space, we just get:
 
 \begin{equation}
-\log \mathbb{P}( \theta \vert X ) = \log \mathbb{P}( Z, \theta \vert X) - \log \mathbb{P}( Z \vert \theta, X )
+\log p( \theta \vert X ) = \log p( Z, \theta \vert X) - \log p( Z \vert \theta, X )
 \end{equation}
 
 Now we've got our first trick of this algorithm -- we consider another value for our parameters, which we'll call $\varphi$.
@@ -79,18 +79,18 @@ If we were to fix this parameter value $\varphi$, then we could reasonably infer
 A bigger leap is that we can then take expectations of our last expression using this probability distribution, which is fine as it's just another constant.
 
 \begin{align}
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( \theta \vert X ) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( \theta \vert X ) \right]
 &=
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \theta \vert X) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z \vert \theta, X ) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z \vert \theta, X ) \right]
 \\
 \Rightarrow
-\log \mathbb{P}( \theta \vert X ) 
+\log p( \theta \vert X ) 
 &=
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \theta \vert X) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z \vert \theta, X ) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z \vert \theta, X ) \right]
 \end{align}
 
 We've been able to simplify because the expectation is taken over a constant value.
@@ -98,23 +98,23 @@ The next trick is to notice that this expression is true **for any** $\theta$ an
 So we could set $\theta = \varphi$, and see what happens when we take the difference of that expression with one involving $\theta$ and $\varphi$.
 
 \begin{align}
-\log \mathbb{P}( \theta \vert X )
+\log p( \theta \vert X )
 -
-\log \mathbb{P}( \varphi \vert X )
+\log p( \varphi \vert X )
 &=
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \theta \vert X) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \varphi \vert X) \right]\\
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \varphi \vert X) \right]\\
 &+
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z \vert \varphi, X ) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z \vert \varphi, X ) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z \vert \theta, X ) \right]\\
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z \vert \theta, X ) \right]\\
 &=
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \theta \vert X) \right]
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \theta \vert X) \right]
 -
-\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log \mathbb{P}( Z, \varphi \vert X) \right]\\
+\mathbb{E}_{Z \sim Z \vert \varphi, X}\left[ \log p( Z, \varphi \vert X) \right]\\
 &+
-D_{KL} \left[ \mathbb{P}( Z \vert \varphi, X ) \Vert \mathbb{P}( Z \vert \theta, X ) \right]
+D_{KL} \left[ p( Z \vert \varphi, X ) \Vert p( Z \vert \theta, X ) \right]
 \\
 \end{align}
 
@@ -126,41 +126,41 @@ To make this a bit more explicit, let's make one more definition:
 Q(\theta, \varphi) 
 &= \mathbb{E}_{Z \sim Z \vert \varphi, X}
 \left[
-         \log \mathbb{P}( X \vert Z, \theta)
+         \log p( X \vert Z, \theta)
          +
-         \log \mathbb{P}( Z \vert \theta)
+         \log p( Z \vert \theta)
          +
-         \log \mathbb{P}(\theta)
+         \log p(\theta)
 \right] \\
 &= \mathbb{E}_{Z \sim Z \vert \varphi, X}
 \left[
-         \log \mathbb{P}( Z, \theta \vert X)
+         \log p( Z, \theta \vert X)
          + 
-         \log \mathbb{P}(X)
+         \log p(X)
 \right]
 \end{align}
 
 Our previous expression now simplifies down:
 
 \begin{equation}
-\log \mathbb{P}( \theta \vert X )
+\log p( \theta \vert X )
 -
-\log \mathbb{P}( \varphi \vert X )
+\log p( \varphi \vert X )
 =
 Q(\theta, \varphi)
 -
 Q(\varphi, \varphi)
 +
-D_{KL} \left[ \mathbb{P}( Z \vert \varphi, X ) \Vert \mathbb{P}( Z \vert \theta, X ) \right]
+D_{KL} \left[ p( Z \vert \varphi, X ) \Vert p( Z \vert \theta, X ) \right]
 \end{equation}
 
 $D_{KL}(p \Vert q) > 0$ for any two probability distributions.
 This gives us an equality linking our posteriors and $Q$:
 
 \begin{equation}
-\log \mathbb{P}( \theta \vert X )
+\log p( \theta \vert X )
 -
-\log \mathbb{P}( \varphi \vert X )
+\log p( \varphi \vert X )
 \geq
 Q(\theta, \varphi)
 -
