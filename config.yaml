@@ -18,3 +18,15 @@ menu:
     - name: Categories
       url: "categories/"
       weight: 3
+
+security:
+  enableInlineShortcodes: true
+  exec:
+    allow:
+    - ^asciidoctor
+    - ^pandoc
+    osEnv:
+    - .*
+  funcs:
+    getenv:
+    - ^INFINITEINKROOT$
